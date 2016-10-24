@@ -82,7 +82,7 @@ static inline int size2level (ssize_t size) {
      */
     int level;
 
-    if (size <= 32){
+    if (size <= MIN_ALLOC){
         //if less than or equal to 32, then it is automatically set to level 0
         level = 0;
     } else {
@@ -173,6 +173,13 @@ void *malloc(size_t size) {
             //
             // NB: If you take the first object out of a whole
             //     superblock, decrement levels[power]->whole_superblocks
+            rv = next->raw;
+
+            if ((bkeep->free_count + 1) == (SUPER_BLOCK_SIZE/(32*(2^bkeep->level)))){
+                pool->whole_superblocks--;
+            }
+            bkeep->free_count--;
+            bkeep->free_list->next = bkeep->free_list->next->next;
 
             break;
         }
