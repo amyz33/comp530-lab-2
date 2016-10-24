@@ -1,0 +1,10 @@
+Questions: 
+
+1. When we malloc(), the object is removed from the free list but where does it go? 
+- how do we/ do we need to keep track of its location
+
+2. When we free(), how do we keep track of the pointer to the position where it was before the object was malloc()ed. 
+
+3. is mmap correct? bookkeeping?
+
+4. explain how superblocks work. 
