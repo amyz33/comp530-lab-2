@@ -1,12 +1,5 @@
 Questions: 
 
-1. When we malloc(), the object is removed from the free list but where does it go? We return a RAW. next -> raw
-
-decrement: superblock count, total free objects in superblock pool 
-- how do we/ do we need to keep track of its location
-
-2. When we free(), how do we keep track of the pointer to the position where it was before the object was malloc()ed. 
-
-3. is mmap correct? bookkeeping?
-
-4. explain how superblocks work. 
+1. Seg fault is because of uninitialized pointers? 
+2. Do we need to implement dropping the last 13 bits? Or does obj2bkeep already do that for us. in other words,
+do we need to do anything else other than obj2bkeep when finding the superblock where an object comes from. NOPE
