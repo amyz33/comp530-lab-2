@@ -101,15 +101,17 @@ struct superblock_bookkeeping * alloc_super (int power) {
 
     void *page;
     struct superblock* sb;
-    int free_objects = 0, bytes_per_object = 0;
+    int bytes_per_object = 32*(1<<power);
+    int free_objects = (SUPER_BLOCK_SIZE/(bytes_per_object));
     char *cursor;
     // Your code here
     // Allocate a page of anonymous memory
     // WARNING: DO NOT use brk---use mmap, lest you face untold suffering
-    page = mmap(NULL,SUPER_BLOCK_SIZE,PROT_READ|PROT_WRITE,MAP_ANON,-1,0);
+    page = mmap(NULL,SUPER_BLOCK_SIZE,PROT_READ|PROT_WRITE,MAP_ANON|MAP_PRIVATE,-1,0);
 
     sb = (struct superblock*) page;
     // Put this one the list.
+
     sb->bkeep.next = levels[power].next;
     levels[power].next = &sb->bkeep;
     levels[power].whole_superblocks++;
@@ -120,7 +122,7 @@ struct superblock_bookkeeping * alloc_super (int power) {
     //  Be sure to add this many objects to levels[power]->free_objects, reserving
     //  the first one for the bookkeeping.
 
-    sb->bkeep.free_count = (SUPER_BLOCK_SIZE/(32*(2^power)))- 1;                //double check this line
+    sb->bkeep.free_count = free_objects;                //double check this line
 
     // The following loop populates the free list with some atrocious
     // pointer math.  You should not need to change this, provided that you
@@ -160,6 +162,7 @@ void *malloc(size_t size) {
         bkeep = alloc_super(power);
     } else
         bkeep = pool->next;
+        //something here is making it seg fault. 
 
     while (bkeep != NULL) {
         if (bkeep->free_count) {
@@ -169,14 +172,15 @@ void *malloc(size_t size) {
             //
             // NB: If you take the first object out of a whole
             //     superblock, decrement levels[power]->whole_superblocks
-            rv = next->raw;
+            
+            rv = next;
 
             if ((bkeep->free_count + 1) == (SUPER_BLOCK_SIZE/(32*(2^bkeep->level)))){
                 pool->whole_superblocks--;
             }
             bkeep->free_count--;
-            bkeep->free_list = bkeep->free_list->next;
-
+            next = next->next;
+			
             break;
         }
     }
@@ -204,6 +208,7 @@ void free(void *ptr) {
     //   Be sure to put this back on the free list, and update the
     //   free count.  If you add the final object back to a superblock,
     //   making all objects free, increment whole_superblocks.
+
 
     /* Exercise 3: Poison a newly freed object to detect use-after-free errors.
      * Hint: use FREE_POISON.
