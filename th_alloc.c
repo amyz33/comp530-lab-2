@@ -108,10 +108,6 @@ struct superblock_bookkeeping * alloc_super (int power) {
     // WARNING: DO NOT use brk---use mmap, lest you face untold suffering
     page = mmap(NULL,SUPER_BLOCK_SIZE,PROT_READ|PROT_WRITE,MAP_ANON,-1,0);
 
-    if(page == MAP_FAILED)
-        //if there is an error with mmap()
-        errno = MAP_FAILED;
-
     sb = (struct superblock*) page;
     // Put this one the list.
     sb->bkeep.next = levels[power].next;
@@ -179,7 +175,7 @@ void *malloc(size_t size) {
                 pool->whole_superblocks--;
             }
             bkeep->free_count--;
-            bkeep->free_list->next = bkeep->free_list->next->next;
+            bkeep->free_list = bkeep->free_list->next;
 
             break;
         }
