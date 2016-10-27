@@ -87,8 +87,8 @@ static inline int size2level (ssize_t size) {
         level = 0;
     } else {
         //else we calculate the level based on size = 32*2^level
-        level = log2(size/32);
-        if (log2(size%32) != 0)
+        level = 1>>(size/32);
+        if (1>>(size%32) != 0)
             //if there is a remainder we have to round up a level
             level++;
     }
@@ -106,14 +106,16 @@ struct superblock_bookkeeping * alloc_super (int power) {
     // Your code here
     // Allocate a page of anonymous memory
     // WARNING: DO NOT use brk---use mmap, lest you face untold suffering
-    page = mmap(NULL,SUPER_BLOCK_SIZE,PROT_READ|PROT_WRITE,MAP_ANON,-1,0);
+    page = mmap(NULL,SUPER_BLOCK_SIZE,PROT_READ|PROT_WRITE,MAP_ANON|MAP_PRIVATE,-1,0);
 
-  //  if(page == MAP_FAILED)
-        //if there is an error with mmap()
-  //      errno = MAP_FAILED;
+//    if(page == MAP_FAILED){
+    //if there is an error with mmap()
+//        errno = MAP_FAILED;
+//    }
 
     sb = (struct superblock*) page;
     // Put this one the list.
+
     sb->bkeep.next = levels[power].next;
     levels[power].next = &sb->bkeep;
     levels[power].whole_superblocks++;
@@ -124,7 +126,9 @@ struct superblock_bookkeeping * alloc_super (int power) {
     //  Be sure to add this many objects to levels[power]->free_objects, reserving
     //  the first one for the bookkeeping.
 
-    sb->bkeep.free_count = (SUPER_BLOCK_SIZE/(32*(1<<power)))- 1;                //double check this line
+    bytes_per_object = 32*(1<<power);
+    free_objects = (SUPER_BLOCK_SIZE/(bytes_per_object))-1;
+    sb->bkeep.free_count = free_objects;
 
     // The following loop populates the free list with some atrocious
     // pointer math.  You should not need to change this, provided that you
@@ -173,13 +177,13 @@ void *malloc(size_t size) {
             //
             // NB: If you take the first object out of a whole
             //     superblock, decrement levels[power]->whole_superblocks
-            rv = next->raw;
+            rv = next;
 
             if ((bkeep->free_count + 1) == (SUPER_BLOCK_SIZE/(32*(1<<bkeep->level)))){
                 pool->whole_superblocks--;
             }
             bkeep->free_count--;
-            bkeep->free_list = bkeep->free_list->next;
+            next = next->next;
 
             break;
         }
@@ -191,6 +195,9 @@ void *malloc(size_t size) {
     /* Exercise 3: Poison a newly allocated object to detect init errors.
      * Hint: use ALLOC_POISON
      */
+
+//    ((struct object *) rv)->raw = ALLOC_POISON;
+
     return rv;
 }
 
@@ -208,10 +215,23 @@ void free(void *ptr) {
     //   Be sure to put this back on the free list, and update the
     //   free count.  If you add the final object back to a superblock,
     //   making all objects free, increment whole_superblocks.
+    struct superblock_pool *pool;
+    struct object *obj;
+    pool = &levels[bkeep->level];
 
+    obj = (struct object *) ptr;
+    obj->next = bkeep->free_list;
+    bkeep->free_list = obj;
+
+    bkeep->free_count++;
+    if((bkeep->free_count + 1) == (SUPER_BLOCK_SIZE/(32*(1<<bkeep->level)))){
+        pool->whole_superblocks++;
+    }
     /* Exercise 3: Poison a newly freed object to detect use-after-free errors.
      * Hint: use FREE_POISON.
      */
+
+//    ((struct object *) ptr)->raw = FREE_POISON;
 
     while (levels[bkeep->level].whole_superblocks > RESERVE_SUPERBLOCK_THRESHOLD) {
         // Exercise 4: Your code here
