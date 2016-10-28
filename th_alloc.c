@@ -6,6 +6,15 @@
  * 
  * to use: 
  * $ export LD_PRELOAD=/path/to/th_alloc.so <your command>
+ *
+ * Name: Amy Zhang 		PID: 720402321		
+ *		 Niko Reingold	PID: 720416077
+ *		 
+ *	Date: 10/28/2016
+ *
+ *		I certify that no unauthorized assistance has been
+ *		received or given in the completion of this work. 
+ *
  */
 
 /* Hard-code some system parameters */
