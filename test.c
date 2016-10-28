@@ -73,7 +73,7 @@ int main() {
                 printf("current %x\n",*((int*) current));
         }
 
-
+		
         printf("\n");
         printf("Free \n");
         free(w);
@@ -82,6 +82,26 @@ int main() {
                 printf("current %x\n",*((int*) current));
         }
 
+        printf("\n");
+        //for char*
+        w = malloc(5);
+        void *current1;
+        for(current1 = w; current1 < w + 32; current1 += sizeof(char)){
+                printf("current char %x\n", *((char*) current1));
+        }
+        printf("\n");
+        *((char*)w) = 'a';
+        for(current1 = w; current1 < w + 32; current1 += sizeof(char)){
+                printf("current char %x\n", *((char*) current1));
+        }
+
+        printf("\n");
+        printf("Free \n");
+        free(w);
+
+        for(current1 = w; current < w + 32; current+=sizeof(char)){
+                printf("current char %x\n", *((char*) current1));
+        }
 
         //munmap test
         printf("\n");
